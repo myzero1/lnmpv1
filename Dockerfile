@@ -17,8 +17,8 @@ RUN apt-get -y upgrade
 
 # Basic Requirements
 RUN apt-get -y install \
-        apache2 \
-        libapache2-mod-php5 \
+        nginx \
+        php5-fpm \
         php5-cli \
         php5-fpm \
         php5-curl \
@@ -39,13 +39,27 @@ RUN apt-get -y install \
 
 RUN sed -i -e"s/^bind-address\s*=\s*127.0.0.1/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
-# apache config
+# nginx config
+RUN sed -i -e"s/keepalive_timeout\s*65/keepalive_timeout 2/" /etc/nginx/nginx.conf
+RUN sed -i -e"s/keepalive_timeout 2/keepalive_timeout 2;\n\tclient_max_body_size 100m/" /etc/nginx/nginx.conf
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf
+
+# php-fpm config
+RUN sed -i -e "s/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/g" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/upload_max_filesize\s*=\s*2M/upload_max_filesize = 100M/g" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/post_max_size\s*=\s*8M/post_max_size = 100M/g" /etc/php5/fpm/php.ini
+RUN sed -i -e "s/;daemonize\s*=\s*yes/daemonize = no/g" /etc/php5/fpm/php-fpm.conf
+RUN sed -i -e "s/;catch_workers_output\s*=\s*yes/catch_workers_output = yes/g" /etc/php5/fpm/pool.d/www.conf
+RUN find /etc/php5/cli/conf.d/ -name "*.ini" -exec sed -i -re 's/^(\s*)#(.*)/\1;\2/g' {} \;
+
+# nginx site conf
+ADD ./nginx-site.conf /etc/nginx/sites-available/default
 
 # add and config phpmyadmin
 RUN apt-get -y install phpmyadmin
 RUN ln -s /usr/share/phpmyadmin /var/www/html
 
-# Lamp Initialization and Startup Script
+# Lnmp Initialization and Startup Script
 ADD ./myzero1_start.sh /myzero1_start.sh
 RUN chmod 755 /myzero1_start.sh
 RUN echo "bash /myzero1_start.sh" >> /etc/bash.bashrc
