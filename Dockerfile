@@ -57,7 +57,7 @@ ADD ./nginx-site.conf /etc/nginx/sites-available/default
 
 # add and config phpmyadmin
 RUN apt-get -y install phpmyadmin
-RUN ln -s /usr/share/phpmyadmin /var/www/html
+RUN ln -s /usr/share/phpmyadmin /usr/share/nginx/html
 
 # Lnmp Initialization and Startup Script
 ADD ./myzero1_start.sh /myzero1_start.sh
